@@ -1,19 +1,8 @@
-DOGS_URL = "http://localhost:3000/dogs"
+const DOGS_URL = 'http://localhost:3000/dogs'
 
 document.addEventListener('DOMContentLoaded', () => {
 fetchDogs()
-
-const dogForm = document.getElementById('dog-form')
-
-dogForm.addEventListener('submit', (e)=> {
-e.preventDefault()
-let dogName = dogForm.name.value
-let dogBreed = dogForm.breed.value
-let dogSex = dogForm.sex.value
-
-handleNewDogForm(dogName, dogBreed, dogSex)
-})
-
+submitForm()
 })
 
 function fetchDogs(){
@@ -22,34 +11,57 @@ function fetchDogs(){
     .then( dogs => renderDogs(dogs) )
 }
 
-function renderDogs(dogs) {
-    dogs.forEach( dog => renderDog(dog) )
+function renderDogs(dogs){
+    table = document.getElementById('table-body')
+    table.innerHTML = ''
+    dogs.forEach( dog => { renderDog(dog, table) })
 }
 
-function renderDog(dog) {
-     table = document.getElementById('table')
+function renderDog(dog, table){
+    
     
     tr = document.createElement('tr')
-    tr.innerHTML = `<td>${dog.name}</td><td>${dog.breed}</td><td>${dog.sex}</td>
-    <td><button> Edit Dog </button></td>`
+    tr.innerHTML = `<td>${dog.name}</td>
+    <td>${dog.breed}</td>
+    <td>${dog.sex}</td>
+    <td><button> Edit Dog </button></td>
+    `
+    editButton = tr.querySelector('button')
+    editButton.addEventListener('click', e => {
+     dogForm = document.getElementById('dog-form')
+     dogForm.dataset.id = dog.id
+     dogForm.name.value = dog.name
+     dogForm.breed.value = dog.breed
+     dogForm.sex.value = dog.sex
+    })
     table.appendChild(tr)
-
 }
 
-function handleNewDogForm(dogName, dogBreed, dogSex) {
-    let config = {
+function submitForm() {
+    document.addEventListener('submit', e => {
+        e.preventDefault()
+        const dogForm = e.target
+        
+        let id = dogForm.dataset.id
+        let name = dogForm.name.value
+        let breed = dogForm.breed.value
+        let sex = dogForm.sex.value
+
+        const body = {name, breed, sex}
+
+        updateDog(id,body)
+    })
+}
+
+function updateDog(id, body) {
+    fetch(`${DOGS_URL}/${id}`, {
         method: 'PATCH',
         headers: {
             'content-type': 'application/json',
             accept: 'application/json'
         },
-        body: JSON.stringify({
-            name: dogName,
-            breed: dogBreed,
-            sex: dogSex
-        })
-    }
-    fetch('http://localhost:3000/dogs/' + `${dog.id}`, config)
-    .then( res=> res.json() )
-    .then ( updatedDog => renderDog(updatedDog) )
+        body: JSON.stringify(body)
+    })
+    .then( res => res.json() )
+    .then( fetchDogs )
 }
